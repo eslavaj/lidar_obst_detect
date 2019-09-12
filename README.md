@@ -1,10 +1,8 @@
-# Sensor Fusion Self-Driving Car Course
+# Lidar obstacle detection sources repo
 
 <img src="media/ObstacleDetectionFPS.gif" width="700" height="400" />
 
 ### Lidar obstacle detection.
-
-
 
 ## Installation
 
