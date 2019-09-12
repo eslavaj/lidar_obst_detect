@@ -7,6 +7,8 @@
 // using templates for processPointClouds so also include .cpp to help linker
 #include "../../processPointClouds.cpp"
 
+#include <pcl/filters/random_sample.h>
+
 pcl::PointCloud<pcl::PointXYZ>::Ptr CreateData()
 {
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
@@ -67,13 +69,63 @@ std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int ma
 	srand(time(NULL));
 	
 	// TODO: Fill in this function
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_sample(new pcl::PointCloud<pcl::PointXYZ>());
 
-	// For max iterations 
 
-	// Randomly sample subset and fit line
+	pcl::RandomSample<pcl::PointXYZ> sampler;
+	sampler.setInputCloud(cloud);
+	sampler.setSample(2);
 
-	// Measure distance between every point and fitted line
-	// If distance is smaller than threshold count it as inlier
+	float A_most, B_most, C_most;
+	int nbr_inliers_most = 0;
+
+	// For max iterations
+	for(int iter=0; iter<maxIterations; iter++)
+	{
+		// Randomly sample subset and fit line
+		sampler.setSeed(random());
+		sampler.filter(*cloud_sample);
+		pcl::PointXYZ p1 = cloud_sample->points[0];
+		float x1 = p1.x;
+		float y1 = p1.y;
+		pcl::PointXYZ p2 = cloud_sample->points[1];
+		float x2 = p2.x;
+		float y2 = p2.y;
+		/*Calculate A, B, C*/
+		float A = y1-y2;
+		float B = x2-x1;
+		float C = x1*y2 - x2*y1;
+		int nbr_inliers=0;
+		std::unordered_set<int> inliers_tmp;
+
+		// Measure distance between every point and fitted line
+		for(int index=0; index< cloud->size(); index++)
+		{
+			pcl::PointXYZ p = cloud->points[index];
+			float x = p.x;
+			float y = p.y;
+			float d = abs(A*x + B*y +C)/(sqrt(A*A+B*B));
+
+			// If distance is smaller than threshold count it as inlier
+			if (d<=distanceTol)
+			{
+				nbr_inliers++;
+				inliers_tmp.insert(index);
+			}
+
+			if (nbr_inliers>nbr_inliers_most)
+			{
+				A_most = A;
+				B_most = B;
+				C_most = C;
+				nbr_inliers_most = nbr_inliers;
+				inliersResult = inliers_tmp;
+			}
+
+		}
+
+	}
+
 
 	// Return indicies of inliers from fitted line with most inliers
 	
@@ -92,7 +144,7 @@ int main ()
 	
 
 	// TODO: Change the max iteration and distance tolerance arguments for Ransac function
-	std::unordered_set<int> inliers = Ransac(cloud, 0, 0);
+	std::unordered_set<int> inliers = Ransac(cloud, 50, 0.3);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr  cloudInliers(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudOutliers(new pcl::PointCloud<pcl::PointXYZ>());
