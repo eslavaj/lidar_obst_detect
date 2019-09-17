@@ -60,9 +60,58 @@ struct KdTree
 	std::vector<int> search(std::vector<float> target, float distanceTol)
 	{
 		std::vector<int> ids;
+		std::vector<Node**> candidate_node_vect;
+		int depth = 0;
+		int inside_box = 0;
+		candidate_node_vect.push_back(&root);
+
+		for(int i = 0; i< candidate_node_vect.size(); i++)
+		{
+			auto candidate_node = candidate_node_vect[i];
+			if(*candidate_node!=NULL)
+			{
+				for(int i=0; i<target.size(); i++)
+				{
+					float candidate_coord_tmp = (*candidate_node)->point[i];
+					if( fabs(candidate_coord_tmp - target[i]) > distanceTol )
+					{
+						inside_box = 0;
+						break;
+					}
+					else
+					{
+						inside_box = 1;
+					}
+				}
+
+				if(inside_box==1)
+				{
+					float d = 0;
+					for(int i=0; i<target.size(); i++)
+					{
+						d += pow((*candidate_node)->point[i] - target[i], 2);
+					}
+					d = sqrt(d);
+					if(d<=distanceTol)
+					{
+						ids.push_back((*candidate_node)->id);;
+					}
+				}
+
+				int comparation_dim = depth % (target.size());
+				if( target[comparation_dim] - distanceTol < (*candidate_node)->point[comparation_dim] )
+				{
+					candidate_node_vect.push_back( &((*candidate_node)->left) );
+				}
+				if( target[comparation_dim] + distanceTol > (*candidate_node)->point[comparation_dim] )
+				{
+					candidate_node_vect.push_back( &((*candidate_node)->right) );
+				}
+				depth++;
+			}
+		}
 		return ids;
 	}
-	
 
 };
 
