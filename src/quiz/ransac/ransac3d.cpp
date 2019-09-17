@@ -7,7 +7,6 @@
 // using templates for processPointClouds so also include .cpp to help linker
 #include "../../processPointClouds.cpp"
 
-#include <pcl/filters/random_sample.h>
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr CreateData()
 {
@@ -69,80 +68,65 @@ std::unordered_set<int> RansacPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, i
 	srand(time(NULL));
 	
 	// TODO: Fill in this function
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_sample(new pcl::PointCloud<pcl::PointXYZ>());
-
-
-	pcl::RandomSample<pcl::PointXYZ> sampler;
-	sampler.setInputCloud(cloud);
-	sampler.setSample(3); /*sample 3 points to define a plane*/
-
 	float A_most, B_most, C_most, D_most;
 	int nbr_inliers_most = 0;
+	size_t cloud_size = cloud->size();
 
 	// For max iterations
 	for(int iter=0; iter<maxIterations; iter++)
 	{
-		// Randomly sample subset and fit line
-		sampler.setSeed(random());
-		sampler.filter(*cloud_sample);
-		pcl::PointXYZ p1 = cloud_sample->points[0];
-		float x1 = p1.x;
-		float y1 = p1.y;
-		float z1 = p1.z;
-		pcl::PointXYZ p2 = cloud_sample->points[1];
-		float x2 = p2.x;
-		float y2 = p2.y;
-		float z2 = p2.z;
-		pcl::PointXYZ p3 = cloud_sample->points[2];
-		float x3 = p3.x;
-		float y3 = p3.y;
-		float z3 = p3.z;
-		/*Calculate A, B, C, D*/
-		float A = (y2-y1)*(z3-z1)-(z2-z1)*(y3-y1);
-		float B = (z2-z1)*(x3-x1)-(x2-x1)*(z3-z1);
-		float C = (x2-x1)*(y3-y1)-(y2-y1)*(x3-x1);
-		float D = -(A*x1 + B*y1 + C*z1);
+		/* get 3 index randomly */
+		int pindex1 = random()%cloud_size;
+		int pindex2 = random()%cloud_size;
+		int pindex3 = random()%cloud_size;
+
+		/*It is almost improbable but just in case let's check points are different*/
+		if( (pindex1==pindex2) || (pindex2==pindex3) || (pindex1==pindex3))
+		{
+			break;
+		}
+
+		/*The 3 points*/
+		pcl::PointXYZ p1 = cloud->points[pindex1];
+		pcl::PointXYZ p2 = cloud->points[pindex2];
+		pcl::PointXYZ p3 = cloud->points[pindex3];
+
+		/*Vector from origin to p1*/
+		Eigen::Vector3f v1 = p1.getVector3fMap();
+		/*Vector from p1 to p2*/
+		Eigen::Vector3f v12 = p2.getVector3fMap() - v1;
+		/*Vector from p1 to p3*/
+		Eigen::Vector3f v13 = p3.getVector3fMap() - v1;
+		/*Normal vector of plane*/
+		Eigen::Vector3f normal_vect = v12.cross(v13);
+
 		int nbr_inliers=0;
 		std::unordered_set<int> inliers_tmp;
 
-		// Measure distance between every point and fitted line
+		/*Measure distance between every point and fitted line*/
 		for(int index=0; index< cloud->size(); index++)
 		{
 			pcl::PointXYZ p = cloud->points[index];
-			float x = p.x;
-			float y = p.y;
-			float z = p.z;
-			float d = fabs(A*x + B*y +C*z + D)/(sqrt(A*A+B*B+C*C));
+			Eigen::Vector3f vp = p.getVector3fMap();
+			float d = fabs(normal_vect.dot(vp) - normal_vect.dot(v1)) / normal_vect.norm();
 
-			// If distance is smaller than threshold count it as inlier
+			/*If distance is smaller than threshold count it as inlier*/
 			if (d<=distanceTol)
 			{
 				nbr_inliers++;
 				inliers_tmp.insert(index);
-				//std::cout<<d<<std::endl;
 			}
 		}
 
-
 		if (nbr_inliers>nbr_inliers_most)
 		{
-			A_most = A;
-			B_most = B;
-			C_most = C;
-			D_most = D;
 			nbr_inliers_most = nbr_inliers;
 			inliersResult = inliers_tmp;
-
 		}
-
-
 	}
-
-
-	// Return indicies of inliers from fitted line with most inliers
 	
+	// Return indicies of inliers from fitted line with most inliers
 	return inliersResult;
-
 }
 
 int main ()
