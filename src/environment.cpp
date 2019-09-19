@@ -112,16 +112,22 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
 
 
   /*Segment the obstacle cloud in several clusters*/
-  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> obstClusters = pointProcessorI->Clustering(segmentCloud.first, 1.0, 3, 1000);
+  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> obstClusters = pointProcessorI->Clustering(segmentCloud.first, 0.8, 13, 1000);
 
   /*Display the different clusters each one with a different color, here we assume there is only 3 clusters in the obstacle cloud*/
   int clusterId = 0;
-  std::vector<Color> colors = {Color(1,0,0), Color(0,1,1), Color(0,0,1), Color(1,1,0), Color(1,0,1), Color(0.8,0.7,0.4)};
+  std::vector<Color> colors = {Color(1,0,0), Color(0,1,1), Color(0,0,1), Color(1,1,0), Color(1,0,1), Color(0.8,0.7,0.4), Color(0.8,0.2,0.2)};
   for(pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : obstClusters)
   {
+	  /*Render obstacles clusters*/
 	  std::cout << "cluster size ";
 	  pointProcessorI->numPoints(cluster);
 	  renderPointCloud(viewer,cluster,"obstCloud"+std::to_string(clusterId),colors[clusterId%(colors.size())]);
+
+	  /*Display bounding boxes for each obstacle cluster*/
+	  Box box = pointProcessorI->BoundingBox(cluster);
+	  renderBox(viewer,box,clusterId, colors[clusterId%(colors.size())]);
+
 	  ++clusterId;
   }
 
