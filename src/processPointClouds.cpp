@@ -27,13 +27,49 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(ty
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
 
-    // TODO:: Fill in the function to do voxel grid point reduction and region based filtering
+    /*Down-sampling the cropped cloud*/
+    typename pcl::PointCloud<PointT>::Ptr filteredCloud(new pcl::PointCloud<PointT>);
+    pcl::VoxelGrid<PointT> voxelg;
+    voxelg.setInputCloud (cloud);
+    voxelg.setLeafSize (filterRes, filterRes, filterRes);
+    voxelg.filter (*filteredCloud);
+
+    typename pcl::PointCloud<PointT>::Ptr roiCloud(new pcl::PointCloud<PointT>);
+    /*We crop out the farthest region*/
+    pcl::CropBox<PointT> region_tmp(true);
+    region_tmp.setMin(minPoint);
+    region_tmp.setMax(maxPoint);
+    region_tmp.setInputCloud(filteredCloud);
+    region_tmp.filter(*roiCloud);
+
+    /*roof_indices will store the indices of points of the roof*/
+    std::vector<int> roof_indices;
+    pcl::CropBox<PointT> region_roof(true);
+    region_tmp.setMin(Eigen::Vector4f(-1.5, -1.7, -1, 1));
+    region_tmp.setMax(Eigen::Vector4f(2.6, 1.7, -0.4, 1));
+    region_tmp.setInputCloud(roiCloud);
+    region_tmp.filter(roof_indices);
+
+    /*change the type to be used by ExtractIndices class*/
+    pcl::PointIndices::Ptr roof_points{new pcl::PointIndices};
+    for(auto index : roof_indices)
+    {
+    	roof_points->indices.push_back(index);
+    }
+
+    /*Extract the roof points from cloud*/
+    //typename pcl::PointCloud<PointT>::Ptr roiCloud2(new pcl::PointCloud<PointT>);
+    pcl::ExtractIndices<PointT> extract;
+    extract.setInputCloud(roiCloud);
+    extract.setIndices(roof_points);
+    extract.setNegative(true);
+    extract.filter(*roiCloud);
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "filtering took " << elapsedTime.count() << " milliseconds" << std::endl;
 
-    return cloud;
+    return roiCloud;
 
 }
 
