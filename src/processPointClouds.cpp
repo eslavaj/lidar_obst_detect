@@ -1,7 +1,8 @@
 // PCL lib Functions for processing point clouds 
 
+#include <unordered_set>
 #include "processPointClouds.h"
-
+#include "kdtree.h"
 
 //constructor:
 template<typename PointT>
@@ -87,7 +88,6 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 		cloud_p->points.push_back(cloud->points[index]);
 	}
 
-
 	pcl::ExtractIndices<PointT> extract;
 	extract.setInputCloud (cloud);
 	extract.setIndices (inliers);
@@ -98,7 +98,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     return segResult;
 }
 
-
+#if 0
 template<typename PointT>
 std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
 {
@@ -133,8 +133,129 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(inliers,cloud);
     return segResult;
 }
+#endif
 
 
+
+//#if 0
+/*
+ * This version of Segment Plane method has been implemented from scratch
+ * */
+template<typename PointT>
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
+{
+    // Time segmentation process
+	auto startTime = std::chrono::steady_clock::now();
+
+    std::unordered_set<int> inliersResult;
+	int nbr_inliers_most = 0;
+	Eigen::Vector3f most_normal_vect;
+	Eigen::Vector3f most_v1;
+	pcl::PointIndices::Ptr inliers(new pcl::PointIndices ());
+	float d;
+
+	PointT p1, p2, p3;
+	int pindex1, pindex2, pindex3;
+	Eigen::Vector3f v1, v12, v13, normal_vect;
+	Eigen::Vector3f vp;
+	PointT p;
+	//float normal_vect_norm;
+	float distanceThreshold_n;
+
+
+	typename pcl::PointCloud<PointT>::Ptr down_sampled_Cloud(new pcl::PointCloud<PointT>);
+	pcl::VoxelGrid<PointT> voxelg;
+	voxelg.setInputCloud (cloud);
+	voxelg.setLeafSize (1.0, 1.0, 1.0);
+	voxelg.filter (*down_sampled_Cloud);
+
+	int cloud_size = down_sampled_Cloud->size();
+
+	// For max iterations
+	for(int iter=0; iter<maxIterations; iter++)
+	{
+		/* get 3 index randomly */
+		pindex1 = random()%cloud_size;
+		pindex2 = random()%cloud_size;
+		pindex3 = random()%cloud_size;
+
+		/*It is almost improbable but just in case let's check points are different*/
+		if( (pindex1==pindex2) || (pindex2==pindex3) || (pindex1==pindex3))
+		{
+			continue;
+		}
+
+		/*The 3 points*/
+		p1 = down_sampled_Cloud->points[pindex1];
+		p2 = down_sampled_Cloud->points[pindex2];
+		p3 = down_sampled_Cloud->points[pindex3];
+
+		/*Vector from origin to p1*/
+		v1 = p1.getVector3fMap();
+		/*Vector from p1 to p2*/
+		v12 = p2.getVector3fMap() - v1;
+		/*Vector from p1 to p3*/
+		v13 = p3.getVector3fMap() - v1;
+		/*Normal vector of plane*/
+		normal_vect = v12.cross(v13);
+		//normal_vect_norm = normal_vect.norm();
+		distanceThreshold_n = distanceThreshold*normal_vect.norm();
+
+		int nbr_inliers=0;
+
+		/*Measure distance between every point and fitted line*/
+		for(int index=0; index< down_sampled_Cloud->size(); index++)
+		{
+			//p = down_sampled_Cloud->points[index];
+			//vp = p.getVector3fMap();
+			vp = down_sampled_Cloud->points[index].getVector3fMap();
+			//d = fabs(normal_vect.dot(vp-v1)) / normal_vect_norm;
+			d = fabs(normal_vect.dot(vp-v1));
+
+			/*If distance is smaller than threshold count it as inlier*/
+			if (d<=distanceThreshold_n)
+			{
+				nbr_inliers++;
+			}
+		}
+
+		if (nbr_inliers>nbr_inliers_most)
+		{
+			nbr_inliers_most = nbr_inliers;
+			most_normal_vect = normal_vect;
+			most_v1 = v1;
+		}
+	}
+
+	/*Now search the inliers using the best parameters*/
+	//normal_vect_norm = most_normal_vect.norm();
+	distanceThreshold_n = distanceThreshold*most_normal_vect.norm();
+	for(int index=0; index< cloud->size(); index++)
+	{
+		//p = cloud->points[index];
+		//vp = p.getVector3fMap();
+		vp = cloud->points[index].getVector3fMap();
+		//d = fabs(most_normal_vect.dot(vp-most_v1)) / normal_vect_norm;
+		d = fabs(most_normal_vect.dot(vp-most_v1));
+
+		/*If distance is smaller than threshold count it as inlier*/
+		if (d<=distanceThreshold_n)
+		{
+			inliers->indices.push_back(index);
+		}
+	}
+
+    auto endTime = std::chrono::steady_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout << "plane segmentation took " << elapsedTime.count() << " milliseconds" << std::endl;
+
+    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(inliers,cloud);
+    return segResult;
+}
+//#endif
+
+
+#if 0
 template<typename PointT>
 std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
 {
@@ -176,6 +297,93 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
 
     return clusters;
 }
+
+#endif
+
+
+
+
+
+
+template<typename PointT>
+void proximity(int pointID, typename pcl::PointCloud<PointT>::Ptr& cluster, std::vector<bool>& processed, const typename pcl::PointCloud<PointT>::Ptr& cloud, KdTree<PointT>* tree, float distanceTol)
+{
+
+	pcl::PointIndices::Ptr cluster_indices(new pcl::PointIndices ());
+	cluster_indices->indices.push_back(pointID);
+
+	for(int i=0; i<cluster_indices->indices.size(); i++)
+	{
+		if( processed[ cluster_indices->indices[i] ] == false)
+		{
+			processed[ cluster_indices->indices[i] ] = true;
+			std::vector<int> clus_tmp = tree->search({cloud->points[ cluster_indices->indices[i] ].x, \
+													  cloud->points[ cluster_indices->indices[i] ].y, \
+													  cloud->points[ cluster_indices->indices[i] ].z},\
+													  distanceTol);
+			cluster_indices->indices.insert(cluster_indices->indices.end(), clus_tmp.begin(), clus_tmp.end());
+		}
+	}
+
+	for(int index : cluster_indices->indices)
+	{
+		cluster->points.push_back(cloud->points[index]);
+	}
+}
+
+
+template<typename PointT>
+typename std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT>* tree, float distanceTol, int minSize, int maxSize)
+{
+	/*Vector of clusters to return*/
+	std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
+	/*to know if a point has been already processed*/
+	std::vector<bool> processed(cloud->points.size(), false);
+
+	for(int j = 0; j<cloud->points.size(); j++)
+	{
+		if(processed[j]==false)
+		{
+			typename pcl::PointCloud<PointT>::Ptr cluster(new pcl::PointCloud<PointT>());
+			proximity(j, cluster, processed, cloud, tree, distanceTol);
+
+			if( (cluster->points.size()>=minSize) && (cluster->points.size()<=maxSize))
+			{
+				clusters.push_back(cluster);
+
+			}
+
+		}
+	}
+
+	return clusters;
+}
+
+//#if 0
+/*
+ * This version of Clustering method has been implemented from scratch
+ * */
+template<typename PointT>
+std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
+{
+	// Time clustering process
+	auto startTime = std::chrono::steady_clock::now();
+
+	/*vector of points */
+	/*Creating the kdtree object with cloud points*/
+	KdTree<PointT> *tree= new KdTree<PointT>(cloud);
+
+	std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters = euclideanCluster(cloud, tree, clusterTolerance, minSize, maxSize);
+
+	auto endTime = std::chrono::steady_clock::now();
+	auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+	std::cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << std::endl;
+
+    return clusters;
+}
+
+//#endif
+
 
 
 template<typename PointT>

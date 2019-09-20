@@ -47,4 +47,9 @@ public:
     std::vector<boost::filesystem::path> streamPcd(std::string dataPath);
   
 };
+
+
+
+
+
 #endif /* PROCESSPOINTCLOUDS_H_ */
