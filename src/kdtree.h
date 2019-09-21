@@ -48,8 +48,7 @@ struct KdTree
 	 */
 	void insert(std::vector<float> point, int id)
 	{
-		// TODO: Fill in this function to insert a new point into the tree
-		// the function should create a new node and place correctly with in the root 
+
 		int depth = 0;
 		Node** current_node = &root;
 
@@ -144,6 +143,13 @@ struct KdTree
 			}
 		}
 		return ids;
+	}
+
+	/*just a wrapper to make types uniform*/
+	std::vector<int> search(PointT target, float distanceTol)
+	{
+		std::vector<int> clus_tmp = this->search({target.x, target.y, target.z}, distanceTol);
+		return clus_tmp;
 	}
 
 };
