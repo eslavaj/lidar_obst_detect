@@ -9,6 +9,13 @@
 #include "processPointClouds.h"
 #include "kdtree.h"
 
+
+/*By default we use plane segmentation and obstacle clustering algorithms developed from scratch
+ * If you want to use PCL library to segment plane and clustering you must define USE_PCL_4_PLANE_CLUSTER
+ * */
+//#define USE_PCL_4_PLANE_CLUSTER (1)
+
+
 template<typename PointT>
 ProcessPointClouds<PointT>::ProcessPointClouds() {}
 
