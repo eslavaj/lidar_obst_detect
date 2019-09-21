@@ -1,55 +1,41 @@
-# Lidar obstacle detection sources repo
+# Lidar obstacle detection project
 
 <img src="media/ObstacleDetectionFPS.gif" width="700" height="400" />
 
-### Lidar obstacle detection.
+### Description.
 
-## Installation
+The goal of this project is to implement obstacle detection with data comming from a lidar Point cloud.
+The inner algorithms have been implemented from scratch except for point cloud formating and rendering where I used PCL library.
+This is a educational project to understand the main algorithms and learn the use of PCL library
 
-### Ubuntu 
+
+## Requirements and installation
+
+You need to install PCL library on your system.
 
 ```bash
 $> sudo apt install libpcl-dev
-$> cd ~
-$> git clone https://github.com/udacity/SFND_Lidar_Obstacle_Detection.git
-$> cd SFND_Lidar_Obstacle_Detection
+$> sudo apt install libproj-dev
+```
+
+## Now clone this repository:
+
+```bash
+$> git clone https://github.com/eslavaj/lidar_obst_detect.git
+```
+
+## To build
+```bash
+$> cd lidar_obst_detect
 $> mkdir build && cd build
 $> cmake ..
 $> make
-$> ./environment
 ```
 
-### Windows 
+## To run the application
+```bash
+$> cd build
+$> ./obst_detection
+```
 
-http://www.pointclouds.org/downloads/windows.html
 
-### MAC
-
-#### Install via Homebrew
-1. install [homebrew](https://brew.sh/)
-2. update homebrew 
-	```bash
-	$> brew update
-	```
-3. add  homebrew science [tap](https://docs.brew.sh/Taps) 
-	```bash
-	$> brew tap brewsci/science
-	```
-4. view pcl install options
-	```bash
-	$> brew options pcl
-	```
-5. install PCL 
-	```bash
-	$> brew install pcl
-	```
-
-#### Prebuilt Binaries via Universal Installer
-http://www.pointclouds.org/downloads/macosx.html  
-NOTE: very old version 
-
-#### Build from Source
-
-[PCL Source Github](https://github.com/PointCloudLibrary/pcl)
-
-[PCL Mac Compilation Docs](http://www.pointclouds.org/documentation/tutorials/compiling_pcl_macosx.php)
