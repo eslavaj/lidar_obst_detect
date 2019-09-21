@@ -1,16 +1,19 @@
-/* \author Aaron Brown */
-// Quiz on implementing kd tree
+/**
+ *  @brief KdTree implementation
+ *
+ *  This structure represent a KdTree.
+ *
+ */
 
 #ifndef KDTREE_H
 #define KDTREE_H
 
-//#include "../../render/render.h"
 #include <iostream>
 #include <vector>
 #include <string>
 
 
-// Structure to represent node of kd tree
+/*Structure to represent node of kd tree*/
 struct Node
 {
 	std::vector<float> point;
@@ -23,15 +26,26 @@ struct Node
 	{}
 };
 
+
+/*Structure to represent a kd tree*/
 template<typename PointT>
 struct KdTree
 {
 	Node* root;
 
+	/*Create the Kdtree */
 	KdTree()
 	: root(NULL)
 	{}
 
+	/**
+	 * @brief Insert a point into the tree.
+	 *
+	 * @param point[in]: the point to be inserted.
+	 * @param id[in]: the id for this point.
+	 *
+	 * @return none.
+	 */
 	void insert(std::vector<float> point, int id)
 	{
 		// TODO: Fill in this function to insert a new point into the tree
@@ -62,6 +76,7 @@ struct KdTree
 		}
 	}
 
+	/*Create the Kdtree and insert the points of a cloud*/
 	KdTree(const typename pcl::PointCloud<PointT>::Ptr cloud)
 	: root(NULL)
 	{
@@ -72,7 +87,7 @@ struct KdTree
 	}
 
 
-	// return a list of point ids in the tree that are within distance of target
+	/*Return a list of point ids in the tree that are within distance of target*/
 	std::vector<int> search(std::vector<float> target, float distanceTol)
 	{
 		std::vector<int> ids;

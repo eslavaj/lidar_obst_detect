@@ -1,5 +1,3 @@
-// PCL lib Functions for processing point clouds 
-
 #ifndef PROCESSPOINTCLOUDS_H_
 #define PROCESSPOINTCLOUDS_H_
 
