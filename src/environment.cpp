@@ -126,7 +126,8 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
 
 	  /*Display bounding boxes for each obstacle cluster*/
 	  Box box = pointProcessorI->BoundingBox(cluster);
-	  renderBox(viewer,box,clusterId, colors[clusterId%(colors.size())]);
+	  //renderBox(viewer,box,clusterId, colors[clusterId%(colors.size())]);
+	  renderBox(viewer,box,clusterId, Color(1,0,0));
 
 	  ++clusterId;
   }
