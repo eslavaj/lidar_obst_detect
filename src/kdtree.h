@@ -94,7 +94,7 @@ struct KdTree
 		std::vector<int> depth = {0};
 		int inside_box = 0;
 		candidate_node_vect.push_back(&root);
-		float candidate_coord_tmp;
+		float d;
 
 		for(int i = 0; i< candidate_node_vect.size(); i++)
 		{
@@ -103,8 +103,7 @@ struct KdTree
 			{
 				for(int j=0; j<target.size(); j++)
 				{
-					candidate_coord_tmp = (*candidate_node)->point[j];
-					if( fabs(candidate_coord_tmp - target[j]) > distanceTol )
+					if( fabs((*candidate_node)->point[j] - target[j]) > distanceTol )
 					{
 						inside_box = 0;
 						break;
@@ -117,7 +116,7 @@ struct KdTree
 
 				if(inside_box==1)
 				{
-					float d = 0;
+					d = 0;
 					for(int k=0; k<target.size(); k++)
 					{
 						d += powf((*candidate_node)->point[k] - target[k], 2);
