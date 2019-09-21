@@ -1,55 +1,48 @@
-# Lidar obstacle detection sources repo
+# Lidar obstacle detection project
 
-<img src="media/ObstacleDetectionFPS.gif" width="700" height="400" />
+### Description.
 
-### Lidar obstacle detection.
+The goal of this project is to implement obstacle detection with data comming from a lidar Point cloud.
+The inner algorithms have been implemented from scratch except for point cloud formating and rendering where I used PCL library.
+This is a educational project to understand the main algorithms and learn the use of PCL library
 
-## Installation
+### Plane segmentation
+<img src="media/plane_obst_segment.jpg" width="777" height="455" />
 
-### Ubuntu 
+### Obstacle clustering
+<img src="media/obst_clustering.jpg" width="895" height="320" />
+
+### Obstacle clustering with bounding boxes
+<img src="media/obst_clustering2.jpg" width="655" height="375" />
+
+
+### Requirements and installation
+
+You need to install PCL library on your system.
 
 ```bash
 $> sudo apt install libpcl-dev
-$> cd ~
-$> git clone https://github.com/udacity/SFND_Lidar_Obstacle_Detection.git
-$> cd SFND_Lidar_Obstacle_Detection
+$> sudo apt install libproj-dev
+```
+
+### Now clone this repository:
+
+```bash
+$> git clone https://github.com/eslavaj/lidar_obst_detect.git
+```
+
+### To build
+```bash
+$> cd lidar_obst_detect
 $> mkdir build && cd build
 $> cmake ..
 $> make
-$> ./environment
 ```
 
-### Windows 
+### To run the application
+```bash
+$> cd build
+$> ./obst_detection
+```
 
-http://www.pointclouds.org/downloads/windows.html
 
-### MAC
-
-#### Install via Homebrew
-1. install [homebrew](https://brew.sh/)
-2. update homebrew 
-	```bash
-	$> brew update
-	```
-3. add  homebrew science [tap](https://docs.brew.sh/Taps) 
-	```bash
-	$> brew tap brewsci/science
-	```
-4. view pcl install options
-	```bash
-	$> brew options pcl
-	```
-5. install PCL 
-	```bash
-	$> brew install pcl
-	```
-
-#### Prebuilt Binaries via Universal Installer
-http://www.pointclouds.org/downloads/macosx.html  
-NOTE: very old version 
-
-#### Build from Source
-
-[PCL Source Github](https://github.com/PointCloudLibrary/pcl)
-
-[PCL Mac Compilation Docs](http://www.pointclouds.org/documentation/tutorials/compiling_pcl_macosx.php)
