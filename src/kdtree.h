@@ -95,13 +95,14 @@ struct KdTree
 		int inside_box = 0;
 		candidate_node_vect.push_back(&root);
 		float d;
+		int nbr_dims_target = target.size();
 
 		for(int i = 0; i< candidate_node_vect.size(); i++)
 		{
 			auto candidate_node = candidate_node_vect[i];
 			if(*candidate_node!=NULL)
 			{
-				for(int j=0; j<target.size(); j++)
+				for(int j=0; j<nbr_dims_target; j++)
 				{
 					if( fabs((*candidate_node)->point[j] - target[j]) > distanceTol )
 					{
@@ -114,10 +115,11 @@ struct KdTree
 					}
 				}
 
+
 				if(inside_box==1)
 				{
 					d = 0;
-					for(int k=0; k<target.size(); k++)
+					for(int k=0; k<nbr_dims_target; k++)
 					{
 						d += powf((*candidate_node)->point[k] - target[k], 2);
 					}
@@ -128,7 +130,7 @@ struct KdTree
 					}
 				}
 
-				int comparation_dim = depth[i] % (target.size());
+				int comparation_dim = depth[i] % (nbr_dims_target);
 				if( target[comparation_dim] - distanceTol < (*candidate_node)->point[comparation_dim] )
 				{
 					candidate_node_vect.push_back( &((*candidate_node)->left) );

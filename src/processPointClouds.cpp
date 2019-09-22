@@ -213,13 +213,21 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
 	int cloud_size = down_sampled_Cloud->size();
 
+	boost::random::mt19937 rng;
+	boost::random::uniform_int_distribution<> idx_gen(0,cloud_size-1);
+
 	// For max iterations
 	for(int iter=0; iter<maxIterations; iter++)
 	{
 		/* get 3 index randomly */
+		/*
 		pindex1 = random()%cloud_size;
 		pindex2 = random()%cloud_size;
 		pindex3 = random()%cloud_size;
+		*/
+		pindex1 = idx_gen(rng);
+		pindex2 = idx_gen(rng);
+		pindex3 = idx_gen(rng);
 
 		/*It is almost improbable but just in case let's check points are different*/
 		if( (pindex1==pindex2) || (pindex2==pindex3) || (pindex1==pindex3))
@@ -239,9 +247,13 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 		/*Vector from p1 to p3*/
 		v13 = p3.getVector3fMap() - v1;
 		/*Normal vector of plane*/
+		/*
+		normal_vect[0] = v12[1]*v13[2]- v12[2]*v13[1];
+		normal_vect[1] = v12[2]*v13[0]- v12[0]*v13[2];
+		normal_vect[2] = v12[0]*v13[1]- v12[1]*v13[0];
+		 */
 		normal_vect = v12.cross(v13);
 		distanceThreshold_n = distanceThreshold*normal_vect.norm();
-
 		int nbr_inliers=0;
 
 		/*Measure distance between every point and fitted line*/
@@ -269,7 +281,9 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
 	/*Now search the inliers using the best parameters*/
 	distanceThreshold_n = distanceThreshold*most_normal_vect.norm();
-	for(int index=0; index< cloud->size(); index++)
+	/*using real cloud*/
+	cloud_size = cloud->size();
+	for(int index=0; index< cloud_size; index++)
 	{
 		/*p = cloud->points[index];
 		  vp = p.getVector3fMap();*/
